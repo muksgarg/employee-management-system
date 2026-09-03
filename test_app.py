@@ -71,6 +71,41 @@ def test_add_employee_invalid_salary(client):
     with app.app_context():
         assert Employee.query.filter_by(email='bad@example.com').first() is None
 
+def test_add_employee_zero_salary(client):
+    response = client.post('/add', data={
+        'name': 'Zero Salary',
+        'department': 'Engineering',
+        'email': 'zero@example.com',
+        'salary': '0'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Please enter a valid, non-negative salary.' not in response.data
+
+    with app.app_context():
+        emp = Employee.query.filter_by(email='zero@example.com').first()
+        assert emp is not None
+        assert emp.salary == 0.0
+
+def test_add_employee_duplicate_email(client):
+    client.post('/add', data={
+        'name': 'First',
+        'department': 'Engineering',
+        'email': 'dup@example.com',
+        'salary': '10000'
+    }, follow_redirects=True)
+
+    response = client.post('/add', data={
+        'name': 'Second',
+        'department': 'Engineering',
+        'email': 'dup@example.com',
+        'salary': '20000'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'An employee with this email already exists.' in response.data
+
+    with app.app_context():
+        assert Employee.query.filter_by(email='dup@example.com').count() == 1
+
 def test_edit_employee_salary(client):
     client.post('/add', data={
         'name': 'Edit Me',
