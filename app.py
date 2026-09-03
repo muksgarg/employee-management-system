@@ -238,6 +238,10 @@ def delete_employee(id):
         TEMPLATE, employees=employees, departments=departments, emp=emp, edit=False, delete=True
     )
 
+@app.route('/health', methods=['GET'])
+def health():
+    return {'status': 'ok'}, 200
+
 # --- Initialize DB & Run App ---
 if __name__ == '__main__':
     with app.app_context():
