@@ -15,7 +15,6 @@ class Employee(db.Model):
     name = db.Column(db.String(100), nullable=False)
     department = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
-    salary = db.Column(db.Float, nullable=False)
 
 # --- HTML Template ---
 TEMPLATE = """
@@ -84,8 +83,6 @@ TEMPLATE = """
             <input class="input" type="text" name="department" maxlength="100" required value="{{ request.form.get('department','') }}">
             <label>Email:</label>
             <input class="input" type="email" name="email" maxlength="100" required value="{{ request.form.get('email','') }}">
-            <label>Salary:</label>
-            <input class="input" type="number" name="salary" step="0.01" min="0" required value="{{ request.form.get('salary','') }}">
             <button type="submit" class="btn btn-add">Add</button>
         </div>
     </form>
@@ -94,7 +91,7 @@ TEMPLATE = """
     <h2>All Employees</h2>
     <table>
         <tr>
-            <th>ID</th><th>Name</th><th>Department</th><th>Email</th><th>Salary</th><th>Actions</th>
+            <th>ID</th><th>Name</th><th>Department</th><th>Email</th><th>Actions</th>
         </tr>
         {% for emp in employees %}
         <tr>
@@ -102,7 +99,6 @@ TEMPLATE = """
             <td>{{emp.name}}</td>
             <td>{{emp.department}}</td>
             <td>{{emp.email}}</td>
-            <td>{{emp.salary}}</td>
             <td class="actions">
                 <a href="{{ url_for('edit_employee', id=emp.id) }}" class="btn btn-edit">Edit</a>
                 <a href="{{ url_for('delete_employee', id=emp.id) }}" class="btn btn-delete">Delete</a>
@@ -110,7 +106,7 @@ TEMPLATE = """
         </tr>
         {% endfor %}
         {% if not employees %}
-        <tr><td colspan="6" style="text-align:center;color:#aaa;">No employee records found.</td></tr>
+        <tr><td colspan="5" style="text-align:center;color:#aaa;">No employee records found.</td></tr>
         {% endif %}
     </table>
 </div>
@@ -129,8 +125,6 @@ TEMPLATE = """
             <input class="input" type="text" name="department" maxlength="100" required value="{{ emp.department }}">
             <label>Email:</label>
             <input class="input" type="email" name="email" maxlength="100" required value="{{ emp.email }}">
-            <label>Salary:</label>
-            <input class="input" type="number" name="salary" step="0.01" min="0" required value="{{ emp.salary }}">
             <button type="submit" class="btn btn-add">Update</button>
             <a href="{{ url_for('index') }}" class="btn">Cancel</a>
         </div>
@@ -152,15 +146,6 @@ TEMPLATE = """
 </div>
 {% endif %}
 """
-
-def _parse_salary(value):
-    try:
-        salary = float(value)
-    except (TypeError, ValueError):
-        return None
-    if salary < 0:
-        return None
-    return salary
 
 # --- ROUTES ---
 
@@ -187,10 +172,9 @@ def add_employee():
     name = request.form.get('name', '').strip()
     department = request.form.get('department', '').strip()
     email = request.form.get('email', '').strip()
-    salary_raw = request.form.get('salary', '').strip()
 
     # Input validation
-    if not name or not department or not email or not salary_raw:
+    if not name or not department or not email:
         flash("All fields are required!", "error")
     elif len(name) > 100 or len(department) > 100 or len(email) > 100:
         flash("Input exceeds maximum allowed length.", "error")
@@ -198,10 +182,8 @@ def add_employee():
         flash("Please enter a valid email address.", "error")
     elif Employee.query.filter_by(email=email).first():
         flash("An employee with this email already exists.", "error")
-    elif _parse_salary(salary_raw) is None:
-        flash("Please enter a valid, non-negative salary.", "error")
     else:
-        new_emp = Employee(name=name, department=department, email=email, salary=_parse_salary(salary_raw))
+        new_emp = Employee(name=name, department=department, email=email)
         db.session.add(new_emp)
         db.session.commit()
         flash(f"Employee '{name}' added successfully.", "success")
@@ -218,9 +200,8 @@ def edit_employee(id):
         name = request.form.get('name', '').strip()
         department = request.form.get('department', '').strip()
         email = request.form.get('email', '').strip()
-        salary_raw = request.form.get('salary', '').strip()
         # Validation
-        if not name or not department or not email or not salary_raw:
+        if not name or not department or not email:
             flash("All fields are required!", "error")
         elif len(name) > 100 or len(department) > 100 or len(email) > 100:
             flash("Input exceeds maximum allowed length.", "error")
@@ -228,13 +209,10 @@ def edit_employee(id):
             flash("Please enter a valid email address.", "error")
         elif Employee.query.filter(Employee.email==email, Employee.id!=id).first():
             flash("Another employee already has this email.", "error")
-        elif _parse_salary(salary_raw) is None:
-            flash("Please enter a valid, non-negative salary.", "error")
         else:
             emp.name = name
             emp.department = department
             emp.email = email
-            emp.salary = _parse_salary(salary_raw)
             db.session.commit()
             flash("Employee updated successfully.", "success")
             return redirect(url_for('index'))
