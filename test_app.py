@@ -95,6 +95,52 @@ def test_edit_employee_salary(client):
         updated = db.session.get(Employee, emp_id)
         assert updated.salary == 60000.0
 
+def test_edit_employee_negative_salary(client):
+    client.post('/add', data={
+        'name': 'Edit Neg',
+        'department': 'HR',
+        'email': 'editneg@example.com',
+        'salary': '40000'
+    }, follow_redirects=True)
+
+    with app.app_context():
+        emp_id = Employee.query.filter_by(email='editneg@example.com').first().id
+
+    response = client.post(f'/edit/{emp_id}', data={
+        'name': 'Edit Neg',
+        'department': 'HR',
+        'email': 'editneg@example.com',
+        'salary': '-500'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Please enter a valid, non-negative salary.' in response.data
+
+    with app.app_context():
+        assert db.session.get(Employee, emp_id).salary == 40000.0
+
+def test_edit_employee_invalid_salary(client):
+    client.post('/add', data={
+        'name': 'Edit Bad',
+        'department': 'HR',
+        'email': 'editbad@example.com',
+        'salary': '40000'
+    }, follow_redirects=True)
+
+    with app.app_context():
+        emp_id = Employee.query.filter_by(email='editbad@example.com').first().id
+
+    response = client.post(f'/edit/{emp_id}', data={
+        'name': 'Edit Bad',
+        'department': 'HR',
+        'email': 'editbad@example.com',
+        'salary': 'nope'
+    }, follow_redirects=True)
+    assert response.status_code == 200
+    assert b'Please enter a valid, non-negative salary.' in response.data
+
+    with app.app_context():
+        assert db.session.get(Employee, emp_id).salary == 40000.0
+
 def test_search_employee(client):
     client.post('/add', data={
         'name': 'Alice Smith',
