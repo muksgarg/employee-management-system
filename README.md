@@ -1,5 +1,7 @@
 # Flask Employee Management System (EMS)
 
+[![Tests](https://github.com/muksgarg/employee-management-system/actions/workflows/tests.yml/badge.svg)](https://github.com/muksgarg/employee-management-system/actions/workflows/tests.yml)
+
 An AI-driven SDLC automated web application built with Flask and SQLite, managed via CodeMie agentic workflows, Jira integration, and Human-in-the-Loop (HITL) governance.
 
 ## Key Features & Enhancements
