@@ -195,7 +195,7 @@ def add_employee():
 # --- Edit/Update Handler ---
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit_employee(id):
-    emp = Employee.query.get_or_404(id)
+    emp = db.get_or_404(Employee, id)
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         department = request.form.get('department', '').strip()
@@ -226,7 +226,7 @@ def edit_employee(id):
 # --- Delete Confirmation Page & Handler ---
 @app.route('/delete/<int:id>', methods=['GET', 'POST'])
 def delete_employee(id):
-    emp = Employee.query.get_or_404(id)
+    emp = db.get_or_404(Employee, id)
     if request.method == 'POST':
         db.session.delete(emp)
         db.session.commit()
@@ -238,12 +238,8 @@ def delete_employee(id):
         TEMPLATE, employees=employees, departments=departments, emp=emp, edit=False, delete=True
     )
 
-# --- Initialize DB ---
+# --- Initialize DB & Run App ---
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
-
-# --- Run App ---
-if __name__ == '__main__':
     app.run(debug=True)
